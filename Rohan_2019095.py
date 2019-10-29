@@ -64,7 +64,7 @@ class Grid:
             obstacle = Obstacle(points[i][0], points[i][1])
             self.myObstacles.append(obstacle)
         for i in range(2 + noOfPoints, 2 + 2 * noOfPoints):
-            value = random.sample(range(1,9), 1)
+            value = random.sample(range(1,10), 1)
             reward = Reward(points[i][0], points[i][1], value[0])
             self.myRewards.append(reward)
         # print(self.start,self.goal,self.myObstacles,self.myRewards)
@@ -90,15 +90,16 @@ class Grid:
                 newreward.append(j)
             self.myObstacles = copy.deepcopy(newobstacle)
             self.myRewards = copy.deepcopy(newreward)
-        self.checkEvent(P)
         check = self.isObstacle(P.getPosition())
         if check[0]:
             print("Move Invalid")
             time.sleep(2)
             self.rotateClockwise((n % 4))
+            # P.increaseEnergy(1)
         else:
-           for i in range(n):
-               P.decreaseEnergy(initialEnergy//3)
+            self.checkEvent(P)
+            for i in range(n):
+                P.decreaseEnergy(initialEnergy//3)
         pass
 
     def rotateClockwise(self, n):
@@ -109,6 +110,8 @@ class Grid:
             n: The number of times the grid has to be rotated
         """
         self.rotateAnticlockwise(n * 3)
+        for i in range(2 * n):
+            P.increaseEnergy(initialEnergy//3)
         pass
 
     def showGrid(self):
@@ -320,8 +323,10 @@ class Player:
                     self.makeMoveDown(val)
                 elif s[i] == 'C':
                     G.rotateClockwise(val)
+                    self.energy += 1
                 elif s[i] == 'A':
                     G.rotateAnticlockwise(val)
+                    self.energy += 1
                 i = i + j - 1
         pass
 
