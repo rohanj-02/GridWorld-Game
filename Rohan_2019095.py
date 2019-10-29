@@ -2,9 +2,8 @@ import os
 import time
 import random
 import copy
-#for clear screen
 
-def clear():
+def clear(): #for clear screen
     _= os.system('cls')
 
 # class Point:
@@ -97,9 +96,9 @@ class Grid:
         global P
         self.N = N
         points = []
-        if difficulty == 'H':
+        if difficulty[0] == 'H':
             noOfPoints = 2 * self.N
-        elif difficulty == 'E':
+        elif difficulty[0] == 'E':
             noOfPoints = self.N
         while len(points) != 2 * noOfPoints + 2:
             #generate tuple
@@ -125,7 +124,7 @@ class Grid:
 
     def rotateAnticlockwise(self, n):
         """
-        Rotates the grid clockwise n times by 90 degrees. The position of goal position
+        Rotates the grid anti-clockwise n times by 90 degrees. The position of goal position
         and player doesn't change.
         Parameters:
             n: The number of times the grid has to be rotated
@@ -142,22 +141,25 @@ class Grid:
                 newreward.append(j)
             self.myObstacles = copy.deepcopy(newobstacle)
             self.myRewards = copy.deepcopy(newreward)
-        self.checkEvent(P)
-        # if self.isObstacle(P.getPosition()):
-        #     print("Move Invalid")
-        #     self.rotateClockwise((n % 4)*3)
-        # else:
-            # player DecreaseEnergy()
+        # self.checkEvent(P)
+        check = self.isObstacle(P.getPosition())
+        if check[0]:
+            print("Move Invalid")
+            time.sleep(2)
+            self.rotateClockwise((n % 4)*3)
+        else:
+           for i in range(n):
+               P.decreaseEnergy(initialEnergy//3)
         pass
 
     def rotateClockwise(self, n):
         """
-        Rotates the grid anti-clockwise n times by 90 degrees. The position of goal position
+        Rotates the grid clockwise n times by 90 degrees. The position of goal position
         and player doesn't change.
         Parameters:
             n: The number of times the grid has to be rotated
         """
-        self.rotateAnticlockwise(n*3)
+        self.rotateAnticlockwise(n * 3)
         pass
 
     def showGrid(self):
@@ -190,6 +192,8 @@ class Grid:
             print()
         time.sleep(1)
 
+    # def rotCheck(self, orientation, value):
+    #     if
     def isReward(self, pt):
         ans = (False,False)
         for i in self.myRewards:
@@ -211,10 +215,10 @@ class Grid:
             gameOver = True
             return True
         elif rew[0]:
-            player.increaseEnergy(rew[1].getValue())
+            player.increaseEnergy(rew[1].getValue() * initialEnergy)
             self.myRewards.remove(rew[1])
         elif ob[0]:
-            player.decreaseEnergy(4*self.N)
+            player.decreaseEnergy(4 * initialEnergy)
             self.myObstacles.remove(ob[1])
         else:
             player.decreaseEnergy(1)
@@ -530,16 +534,25 @@ class Player:
 # show(n)
 # print()
 # rotate(n,4)
-
 # Grid G
 # Player P
 # clear()
 # time.sleep(2)
 # print("hello")
 # time.sleep(3)
-P = Player(0,0,100)
-G = Grid(20,'H')
+initialEnergy = 20
+print("What should be the size of the grid?")
+N = int(input())
+print("Choose difficulty: 'H' for Hard and 'E' for Easy:")
+diff = input()
+P = Player(0,0,2 * initialEnergy)
+G = Grid(N,diff)
 gameOver = False
+
+def display(G, P):
+    clear()
+    print(P.getEnergy())
+    G.showGrid()
 
 def runner():
     s=''
@@ -550,9 +563,6 @@ def runner():
         if s != 'EXIT':
             P.makeMove(s)
 
-def display(G, P):
-    clear()
-    print(P.getEnergy())
-    G.showGrid()
+
 
 runner()
