@@ -94,7 +94,7 @@ class Grid:
         """
         #Invariants
         assert type(N) == int, "N should be of type int "
-
+        global P
         self.N = N
         points = []
         if difficulty == 'H':
@@ -121,15 +121,16 @@ class Grid:
             self.myRewards.append(reward)
         # print(self.start,self.goal,self.myObstacles,self.myRewards)
         # self.showGrid()
+        P.setPosition(self.start[0],self.start[1])
 
-    def rotateClockwise(self, n):
+    def rotateAnticlockwise(self, n):
         """
         Rotates the grid clockwise n times by 90 degrees. The position of goal position
         and player doesn't change.
         Parameters:
             n: The number of times the grid has to be rotated
         """
-        self.showGrid()
+        global P
         for k in range(n % 4):
             newobstacle = []
             newreward = []
@@ -141,25 +142,22 @@ class Grid:
                 newreward.append(j)
             self.myObstacles = copy.deepcopy(newobstacle)
             self.myRewards = copy.deepcopy(newreward)
-        print()
-        self.showGrid()
-        if self.isObstacle(self.start):  # returns true if everything is alright.. if obstacle clashes then returns false
-            print("Move Invalid")
-            self.rotateAnticlockwise(n)
-            print(n)
-            # self.showGrid()
+        self.checkEvent(P)
+        # if self.isObstacle(P.getPosition()):
+        #     print("Move Invalid")
+        #     self.rotateClockwise((n % 4)*3)
         # else:
             # player DecreaseEnergy()
         pass
 
-    def rotateAnticlockwise(self, n):
+    def rotateClockwise(self, n):
         """
         Rotates the grid anti-clockwise n times by 90 degrees. The position of goal position
         and player doesn't change.
         Parameters:
             n: The number of times the grid has to be rotated
         """
-        self.rotateClockwise(n*3)
+        self.rotateAnticlockwise(n*3)
         pass
 
     def showGrid(self):
@@ -170,45 +168,59 @@ class Grid:
         Empty Cells: '.'
         Player: '0'
         """
+        global P
+        clear()
+        print(P.getEnergy())
         for i in range(1, self.N):
             for j in range(1, self.N):
                 # temp = Point(i,j)
-                temp = (i,j)
+                temp = (j,i)
                 rew = self.isReward(temp)
-                if rew[0]:
-                    print(rew[1], end =" ")
-                elif self.isObstacle(temp):
-                    print("#", end =" ")
-                elif temp == self.start: #start will be changed to player pos after every turn
-                    print("O", end = " ")
+                ob = self.isObstacle(temp)
+                if temp == P.getPosition(): #start will be changed to player pos after every turn
+                    print("|", end = " ")
                 elif temp == self.goal:
                     print("G", end = " ")
+                elif rew[0]:
+                    print(rew[1].getValue(), end =" ")
+                elif ob[0]:
+                    print("#", end =" ")
                 else:
                     print(".", end = " ")
             print()
+        time.sleep(1)
 
     def isReward(self, pt):
         ans = (False,False)
         for i in self.myRewards:
             if i.isEqual(pt):
-                ans = (True,i.getValue())
+                ans = (True,i)
         return ans
 
     def isObstacle(self, pt):
-        ans = False
+        ans = (False,1)
         for i in self.myObstacles:
             if i.isEqual(pt):
-                ans = True
+                ans = (True,i)
         return ans
 
-    def checkEvent(self, playerPos):
-        # for i in self.myRewards:
-            # if i == playerPos:
-                # P.increaseEnergy(i.getValue())
-        if playerPos == goal:
-            gameNotOver = False
-        # elif playerPos in self.myObstacles:
-            # P.setEnergy(P.getEnergy-4n)
+    def checkEvent(self, player):
+        rew = self.isReward(player.getPosition())
+        ob = self.isObstacle(player.getPosition())
+        if player.getPosition() == self.goal:
+            gameOver = True
+            return True
+        elif rew[0]:
+            player.increaseEnergy(rew[1].getValue())
+            self.myRewards.remove(rew[1])
+        elif ob[0]:
+            player.decreaseEnergy(4*self.N)
+            self.myObstacles.remove(ob[1])
+        else:
+            player.decreaseEnergy(1)
+        if player.getEnergy() < 0:
+            gameOver = True
+            return False
         pass
 
     def setN(self, n):
@@ -319,7 +331,7 @@ class Player:
         makeMove(s) : moves the player
     """
 
-    def __init(self, x, y, energy):
+    def __init__(self, x, y, energy):
         self.x = x
         self.y = y
         self.energy = energy
@@ -339,61 +351,102 @@ class Player:
             eg. s = "R4D3L2U1" means move 4 units to the right, then 3 units down,
             then 2 units to the left and finally 1 unit upwards.
         """
-        instructions = s.upper()
+        s = s.upper()
         for i in range(len(s)):
             if s[i].isalpha():
-                for j in range(i,len(s)):
-                    if s[j].isaplha():
+                for j in range(i + 1,len(s)):
+                    if s[j].isalpha():
+                        j -= 1
                         break
+                val = int(s[i+1:j + 1])
                 if s[i] == 'R':
-                    self.makeMoveRight(j)
+                    self.makeMoveRight(val)
                 elif s[i] == 'L':
-                    self.makeMoveLeft(j)
+                    self.makeMoveLeft(val)
                 elif s[i] == 'U':
-                    self.makeMoveUp(j)
+                    self.makeMoveUp(val)
                 elif s[i] == 'D':
-                    self.makeMoveDown(j)
+                    self.makeMoveDown(val)
                 elif s[i] == 'C':
-                    G.rotateClockwise(j)
+                    G.rotateClockwise(val)
                 elif s[i] == 'A':
-                    G.rotateAnticlockwise(j)
+                    G.rotateAnticlockwise(val)
                 i = i + j - 1
         pass
 
     def makeMoveRight(self, value):
+        global G,gameOver
         for i in range(value):
             self.x += 1
-            if G.getN() < self.x:# G.setStart(self.pos)
+            if G.getN() <= self.x:
                 self.x = 1
-            self.energy -= 1
-            G.checkEvent((self.x,self.y))
+            check = G.checkEvent(self)
+            if check == True:
+                print("You Won")
+                gameOver = True
+                break
+            elif check == False:
+                print("You Lose")
+                gameOver = True
+                break
+            else:
+                G.showGrid()
+            # G.checkEvent((self.x,self.y))
+            # G.showGrid()
 
     def makeMoveLeft(self, value):
+        global G,gameOver
         for i in range(value):
             self.x -= 1
             if self.x < 1:# G.setStart(self.pos)
                 self.x = G.getN()
-            # G.setStart(self.pos)
-            self.energy -= 1
-            G.checkEvent((self.x,self.y))
+            check = G.checkEvent(self)
+            if check == True:
+                print("You Won")
+                gameOver = True
+                break
+            elif check == False:
+                print("You Lose")
+                gameOver = True
+                break
+            else:
+                G.showGrid()
 
     def makeMoveUp(self, value):
-        for i in range(value):
-            self.y += 1
-            if self.y < 1:# G.setStart(self.pos)
-                self.y = G.getN()
-            # G.setStart(self.pos)
-            self.energy -= 1
-            G.checkEvent((self.x,self.y))
-
-    def makeMoveDown(self, value):
+        global G,gameOver
         for i in range(value):
             self.y -= 1
-            if G.getN() < self.y:# G.setStart(self.pos)
+            if self.y < 1:
+                self.y = G.getN()
+            check = G.checkEvent(self)
+            if check == True:
+                print("You Won")
+                gameOver = True
+                break
+            elif check == False:
+                print("You Lose")
+                gameOver = True
+                break
+            else:
+                G.showGrid()
+
+    def makeMoveDown(self, value):
+        global G,gameOver
+        for i in range(value):
+            self.y += 1
+            if G.getN() <= self.y:
                 self.y = 1
-            # G.setStart(self.pos)
-            self.energy -= 1
-            G.checkEvent((self.x,self.y))
+            check = G.checkEvent(self)
+            if check == True:
+                print("You Won")
+                gameOver = True
+                break
+            elif check == False:
+                print("You Lose")
+                gameOver = True
+                break
+            else:
+                G.showGrid()
 
     def getEnergy(self):
         """
@@ -408,6 +461,22 @@ class Player:
             e : The value to which energy is to be set
         """
         self.energy = e
+
+    def increaseEnergy(self, e):
+        """
+        Increases the player energy by e
+        Parameters:
+            e : The value by which energy is to be incremented
+        """
+        self.energy += e
+
+    def decreaseEnergy(self, e):
+        """
+        Decreases the player energy by e
+        Parameters:
+            e : The value by which energy is to be decremented
+        """
+        self.energy -= e
 
     def setPosition(self, xNew, yNew):
         """
@@ -424,7 +493,7 @@ class Player:
         """
         Returns the position of player in a (x,y) format
         """
-        return self.x,self.y
+        return (self.x,self.y)
 
 
 # def show(n):
@@ -468,6 +537,22 @@ class Player:
 # time.sleep(2)
 # print("hello")
 # time.sleep(3)
+P = Player(0,0,100)
+G = Grid(20,'H')
+gameOver = False
 
-G = Grid(10,'H')
-G.rotateAnticlockwise(1)
+def runner():
+    s=''
+    condition = False
+    while s != 'EXIT' and not(gameOver):
+        display(G, P)
+        s = input()
+        if s != 'EXIT':
+            P.makeMove(s)
+
+def display(G, P):
+    clear()
+    print(P.getEnergy())
+    G.showGrid()
+
+runner()
