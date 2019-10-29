@@ -6,69 +6,6 @@ import copy
 def clear(): #for clear screen
     _= os.system('cls')
 
-# class Point:
-#     """
-#     Defines a point in the 2-D space.
-#     Data Members:
-#         x: x-coordinate of the Point
-#         y: y-coordinate of the Point
-#     Member Functions:
-#     """
-#
-#     def __init__(self, x, y):
-#         """
-#         Preconditions:
-#             x: an Integer
-#             y: an Integer
-#         """
-#         assert type(x) == int, "x should be an Integer"
-#         assert type(y) == int, "y should be an Integer"
-#
-#         self.x = x
-#         self.y = y
-#
-#     def setXY(self, x , y):
-#         """
-#         Sets x and y coordinate.
-#         Parameters:
-#             x: x-coordinate of the Point
-#             y: y-coordinate of the Point
-#         """
-#         self.x = x
-#         self.y = y
-#         assert type(x) == int, "x should be an Integer"
-#         assert type(y) == int, "y should be an Integer"
-#
-#
-#     def getX(self):
-#         """
-#         Returns the x-coordinate of the Point
-#         Return type: Integer
-#         """
-#         return self.x
-#
-#     def getY(self):
-#         """
-#         Returns the y-coordinate of the Point
-#         Return type: Integer
-#         """
-#         return self.y
-#
-#     def show(self):
-#         """
-#         Prints the coordinates of the Point
-#         """
-#         print(self.getX(),self.getY())
-#
-#     def isEqual(self, p2):
-#         """
-#         Returns true if p2 is equal to the point object.
-#         Parameters:
-#             p2: an object of type point
-#         """
-#         assert type(p2) == Point, "p2 should be of type Point"
-#         return self.x == p2.x and self.y == p2.y
-
 
 class Grid:
     """
@@ -146,19 +83,19 @@ class Grid:
             newobstacle = []
             newreward = []
             for i in self.myObstacles:
-                j = Obstacle(i.y, self.N - i.x )
+                j = Obstacle(i.y, self.N - i.x +1)
                 newobstacle.append(j)
             for i in self.myRewards:
-                j = Reward(i.y, self.N - i.x, i.getValue())
+                j = Reward(i.y, self.N - i.x + 1, i.getValue())
                 newreward.append(j)
             self.myObstacles = copy.deepcopy(newobstacle)
             self.myRewards = copy.deepcopy(newreward)
-        # self.checkEvent(P)
+        self.checkEvent(P)
         check = self.isObstacle(P.getPosition())
         if check[0]:
             print("Move Invalid")
             time.sleep(2)
-            self.rotateClockwise((n % 4)*3)
+            self.rotateClockwise((n % 4))
         else:
            for i in range(n):
                P.decreaseEnergy(initialEnergy//3)
@@ -204,8 +141,6 @@ class Grid:
             print()
         time.sleep(1)
 
-    # def rotCheck(self, orientation, value):
-    #     if
     def isReward(self, pt):
         ans = (False,False)
         for i in self.myRewards:
@@ -394,7 +329,7 @@ class Player:
         global G,gameOver
         for i in range(value):
             self.x += 1
-            if G.getN() <= self.x:
+            if G.getN() < self.x:
                 self.x = 1
             check = G.checkEvent(self)
             if check == True:
@@ -450,7 +385,7 @@ class Player:
         global G,gameOver
         for i in range(value):
             self.y += 1
-            if G.getN() <= self.y:
+            if G.getN() < self.y:
                 self.y = 1
             check = G.checkEvent(self)
             if check == True:
@@ -512,46 +447,6 @@ class Player:
         return (self.x,self.y)
 
 
-# def show(n):
-#     for i in range(1,n+1):
-#         for j in range(1,n+1):
-#             if (i,j) in obstacle:
-#                 print('#', end =' ')
-#             elif (i,j) in reward:
-#                 print('r', end = ' ')
-#             else:
-#                 print('.', end = ' ')
-#         print()
-#
-# def rotate(n,x):
-#     newobstacle = []
-#     newreward = []
-#     global obstacle,reward
-#     for k in range(x):
-#         newobstacle = []
-#         newreward = []
-#         for i in obstacle:
-#             j = (i[1],n-i[0]+1)
-#             newobstacle.append(j)
-#         for i in reward:
-#             j = (i[1],n-i[0]+1)
-#             newreward.append(j)
-#         obstacle = newobstacle
-#         reward = newreward
-#     show(n)
-#
-# n = 5
-# obstacle = [(1,1),(2,5),(4,1)]
-# reward = [(2,2),(3,5),(5,1)]
-# show(n)
-# print()
-# rotate(n,4)
-# Grid G
-# Player P
-# clear()
-# time.sleep(2)
-# print("hello")
-# time.sleep(3)
 initialEnergy = 20
 print("What should be the size of the grid?")
 N = int(input())
