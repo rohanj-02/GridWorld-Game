@@ -100,10 +100,22 @@ class Grid:
             noOfPoints = 2 * self.N
         elif difficulty[0] == 'E':
             noOfPoints = self.N
+        boundaryList = [1,self.N]
+        while len(points) != 2:
+            first = random.sample(range(1, self.N + 1), 1)
+            if first in boundaryList:
+                second = random.sample(range(1, self.N + 1), 1)
+            else:
+                second = random.sample(range(2), 1)
+                second = boundaryList[second[0]]
+                # print(second)
+            newPoint = (first[0],second)
+            if newPoint not in points:
+                points.append(newPoint)
         while len(points) != 2 * noOfPoints + 2:
             #generate tuple
-            ptX = random.sample(range(1, self.N), 1)
-            ptY = random.sample(range(1, self.N), 1)
+            ptX = random.sample(range(1, self.N + 1), 1)
+            ptY = random.sample(range(1, self.N + 1), 1)
             pt = (ptX[0],ptY[0])
             if pt not in points:
                 points.append(pt)
@@ -173,8 +185,8 @@ class Grid:
         global P
         clear()
         print(P.getEnergy())
-        for i in range(1, self.N):
-            for j in range(1, self.N):
+        for i in range(1, self.N+1):
+            for j in range(1, self.N+1):
                 # temp = Point(i,j)
                 temp = (j,i)
                 rew = self.isReward(temp)
@@ -562,7 +574,4 @@ def runner():
         s = input()
         if s != 'EXIT':
             P.makeMove(s)
-
-
-
 runner()
