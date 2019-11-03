@@ -12,20 +12,24 @@ class Grid:
     Data Members:
         N : size of the grid
         start : original position of the player
-        goal: final position of the player
-        myObstacles: an array of obstacles
-        myRewards: an array of rewards
+        goal: position to reach in order to win
+        myObstacles: an list of obstacles
+        myRewards: an list of rewards
 
     Member Functions:
         rotateClockwise(n) : rotates the grid clockwise n times by 90 degrees.
         rotateAnticlockwise(n) : rotates the grid anti-clockwise n times by 90 degrees .
         showGrid() : prints the grid on the console.
+        isReward(pt) : returns True if point pt is one of the reward point
+        isObstacle(pt) : returns True if point pt is one of the obstacle point
+        checkEvent(player) : checks the status of grid after each turn and handles energy increment/ decrement.
     """
 
     def __init__(self, N, difficulty):
         """
         Preconditions:
             N : the size of the grid, an Integer Value
+            difficulty : an character having 'H' for hard difficulty and 'E' for easy difficulty
             start,goal,myRewards,myObstacles assigned randomly.
         """
         #Invariants
@@ -34,7 +38,7 @@ class Grid:
         global P
         self.N = N
         points = []
-        if self.N == 2:
+        if self.N == 2: #difficulty doesn't matter when N < 5 because it isn't possible to have 4*n + 2 points in grid size < 5
             noOfPoints = 1
         elif self.N == 3:
             noOfPoints = self.N
@@ -45,19 +49,19 @@ class Grid:
         elif difficulty[0] == 'E':
             noOfPoints = self.N
         boundaryList = [1,self.N]
-        while len(points) != 2:
+        while len(points) != 2: # to make sure start and goal are points at the boundary
             first = random.sample(range(1, self.N + 1), 1)
-            if first in boundaryList:
+            if first in boundaryList: # if x coordinate on boundary then y can be anything
                 second = random.sample(range(1, self.N + 1), 1)
                 second = second[0]
-            else:
+            else: # if x coordinate not on boundary then y has to be on boundary
                 second = random.sample(range(2), 1)
                 second = boundaryList[second[0]]
                 # print(second)
             newPoint = (first[0],second)
             if newPoint not in points:
                 points.append(newPoint)
-        while len(points) != 2 * noOfPoints + 2:
+        while len(points) != 2 * noOfPoints + 2:#sets 2*n + 2 unique points in points list which then get assigned to obstacle rewards. start, goal
             #generate tuple
             ptX = random.sample(range(1, self.N + 1), 1)
             ptY = random.sample(range(1, self.N + 1), 1)
@@ -68,16 +72,16 @@ class Grid:
         self.goal = points[1]
         self.myObstacles = []
         self.myRewards = []
-        for i in range(2, 2 + noOfPoints):
+        for i in range(2, 2 + noOfPoints): # initialisation of obstacles
             obstacle = Obstacle(points[i][0], points[i][1])
             self.myObstacles.append(obstacle)
-        for i in range(2 + noOfPoints, 2 + 2 * noOfPoints):
+        for i in range(2 + noOfPoints, 2 + 2 * noOfPoints): # initialisation of rewards
             value = random.sample(range(1,10), 1)
             reward = Reward(points[i][0], points[i][1], value[0])
             self.myRewards.append(reward)
         # print(self.start,self.goal,self.myObstacles,self.myRewards)
         # self.showGrid()
-        P.setPosition(self.start[0],self.start[1])
+        P.setPosition(self.start[0],self.start[1])# initialising player position to start
 
     def rotateAnticlockwise(self, n):
         """
@@ -86,27 +90,28 @@ class Grid:
         Parameters:
             n: The number of times the grid has to be rotated
         """
-        global P
-        for k in range(n % 4):
+        global P, visited
+        for k in range(n % 4): # since after 4 rotation, grid back to original position
             newobstacle = []
             newreward = []
             for i in self.myObstacles:
-                j = Obstacle(i.y, self.N - i.x +1)
+                j = Obstacle(i.y, self.N - i.x +1) # formula for rotation which i got from doing rotation in my notebook
                 newobstacle.append(j)
             for i in self.myRewards:
                 j = Reward(i.y, self.N - i.x + 1, i.getValue())
                 newreward.append(j)
-            self.myObstacles = copy.deepcopy(newobstacle)
-            self.myRewards = copy.deepcopy(newreward)
+            self.myObstacles = copy.deepcopy(newobstacle) # myObstacles assigned new rotated obstacles
+            self.myRewards = copy.deepcopy(newreward) # myRewards assigned new rotated rewards
         check = self.isObstacle(P.getPosition())
         if check[0]:
-            print("Grid can't be rotated. Player clashing with obstacle.")
+            print("Grid can't be rotated. Player clashing with obstacle.") # if clashing with obstacle
             time.sleep(2)
-            self.rotateClockwise((n % 4))
+            self.rotateClockwise((n % 4)) # undo rotate antiCLockwise by rotating clockWise same number of times
             # P.increaseEnergy(1)
         else:
             self.checkEvent(P)
-            for i in range(n):
+            visited = []
+            for i in range(n): #decreaseEnergy for each n
                 P.decreaseEnergy(self.N//3)
         pass
 
@@ -117,7 +122,7 @@ class Grid:
         Parameters:
             n: The number of times the grid has to be rotated
         """
-        self.rotateAnticlockwise(n * 3)
+        self.rotateAnticlockwise(n * 3) # rotating n clockwise is same as rotating 3*n anti clockwise
         for i in range(2 * n):
             P.increaseEnergy(self.N//3)
         pass
@@ -134,12 +139,11 @@ class Grid:
         clear()
         print("ENERGY:", P.getEnergy())
         for i in range(1, self.N+1):
-            for j in range(1, self.N+1):
-                # temp = Point(i,j)
+            for j in range(1, self.N+1): # iterating through every point, if point is reward then print corresponding value if obstacle then # if goal then G if player then O else .
                 temp = (j,i)
                 rew = self.isReward(temp)
                 ob = self.isObstacle(temp)
-                if temp == P.getPosition(): #start will be changed to player pos after every turn
+                if temp == P.getPosition():
                     print("O", end = " ")
                 elif temp == self.goal:
                     print("G", end = " ")
@@ -152,9 +156,15 @@ class Grid:
                 else:
                     print(".", end = " ")
             print()
-        time.sleep(1)
+        time.sleep(1) # delay to show each step
 
     def isReward(self, pt):
+        """
+        Parameters:
+            pt: A tuple of the form (x,y)
+
+        Function returns (True,index of reward pt that is equal to pt) if point pt is one of the points in myRewards else (false,false)
+        """
         ans = (False,False)
         for i in self.myRewards:
             if i.isEqual(pt):
@@ -162,6 +172,12 @@ class Grid:
         return ans
 
     def isObstacle(self, pt):
+        """
+        Parameters:
+            pt: A tuple of the form (x,y)
+
+        Function returns (True, index of obstacle pt that is equal to pt) if point pt is one of the points in myObstacles else (false,1)
+        """
         ans = (False,1)
         for i in self.myObstacles:
             if i.isEqual(pt):
@@ -169,22 +185,28 @@ class Grid:
         return ans
 
     def checkEvent(self, player):
-        rew = self.isReward(player.getPosition())
-        ob = self.isObstacle(player.getPosition())
-        if player.getPosition() == self.goal and len(self.myRewards) == 0:
+        """
+        Handles energy and checks if Game Over or not after each step
+        Returns true if game over and player won
+        Returns false if game over and player lost
+        Returns none if game not over
+        """
+        rew = self.isReward(player.getPosition()) # performing checks if player on a reward
+        ob = self.isObstacle(player.getPosition())# performing checks if player on an obstacle
+        if player.getPosition() == self.goal and len(self.myRewards) == 0: # if all rewards eaten and player on goal
             gameOver = True
             return True
-        elif player.getPosition() == self.goal:
+        elif player.getPosition() == self.goal: # if player on goal but all rewards not eaten
                 print("Collect all rewards and come back to win the game.")
                 time.sleep(2)
-        elif rew[0]:
+        elif rew[0]: # if player on reward then increase energy value*n
             player.increaseEnergy(rew[1].getValue() * initialEnergy)
             self.myRewards.remove(rew[1])
-        elif ob[0]:
-            player.decreaseEnergy(4 * initialEnergy)
+        elif ob[0]: # if player on obstacle then decrease energy 4*n
+            player.decreaseEnergy(4 * initialEnergy) # obstacle not removed after hitting obstacle
             # self.myObstacles.remove(ob[1])
         player.decreaseEnergy(1)
-        if player.getEnergy() <= 0:
+        if player.getEnergy() <= 0: # if playe renergy non- positive then game Over
             gameOver = True
             return False
         pass
@@ -239,7 +261,8 @@ class Obstacle:
     Data Members:
         x: x-coordinate of obstacle
         y: y-coordinate of obstacle
-    No Member Functions
+    Member Functions:
+        isEqual(pt) : returns True if point pt equals the obstacle point
     """
 
     def __init__(self, x, y):
@@ -247,6 +270,11 @@ class Obstacle:
         self.y = y
 
     def isEqual(self, pt):
+        """
+        Parameters:
+            pt : A tuple of form (x,y)
+        Returns true if pt is equal to coordinates of obstacle
+        """
         return self.x == pt[0] and self.y == pt[1]
 
 
@@ -258,7 +286,8 @@ class Reward:
         x: x-coordinate of reward
         y: y-coordinate of reward
         value: Value of the reward
-    No Member Functions
+    Member Functions:
+        isEqual(pt) : returns True if point pt equals the reward point
     """
 
     def __init__(self, x, y, value):
@@ -267,6 +296,11 @@ class Reward:
         self.value = value
 
     def isEqual(self, pt):
+        """
+        Parameters:
+            pt: A tuple of the form (x,y)
+        Returns true if pt is equal to coordinates of reward
+        """
         return self.x == pt[0] and self.y == pt[1]
 
     def getValue(self):
@@ -295,6 +329,10 @@ class Player:
 
     Member Functions:
         makeMove(s) : moves the player
+        getEnergy(): returns the energy of the player
+        setEnergy(e) : sets the energy of the player to e
+        increaseEnergy(e) : increases the energy of the player by e
+        decreaseEnergy(e) : decreases the energy of the player by e
     """
 
     def __init__(self, x, y, energy):
@@ -319,9 +357,9 @@ class Player:
         """
         global visited
         s = s.upper()
-        visited.append((self.x,self.y))
+        visited.append((self.x,self.y)) # to display 'x' as trail
         for i in range(len(s)):
-            if s[i].isalpha():
+            if s[i].isalpha(): # if found an alphabet then it sees the number ahead of it and puts the number in value
                 for j in range(i + 1,len(s)):
                     if s[j].isalpha():
                         j -= 1
@@ -337,27 +375,32 @@ class Player:
                     self.makeMoveDown(val)
                 elif s[i] == 'C':
                     G.rotateClockwise(val)
-                    self.energy += 1
+                    self.energy += 1 # because energy to be decreased is ony n//3 and checkEvent decreases 1 for every move
                 elif s[i] == 'A':
                     G.rotateAnticlockwise(val)
-                    self.energy += 1
-                i = i + j - 1
+                    self.energy += 1 # because energy to be decreased is ony n//3 and checkEvent decreases 1 for every move
+                i = i + j - 1 # goes directly to the new alphabet
         pass
 
     def makeMoveRight(self, value):
+        """
+        Parameters :
+            value : the amount by which the player had to be moved
+        Moves the player to the right
+        """
         global G,gameOver,visited
         for i in range(value):
             self.x += 1
-            if G.getN() < self.x:
+            if G.getN() < self.x: # if player on last colum then spawm player at the first column
                 self.x = 1
-            visited.append((self.x,self.y))
+            visited.append((self.x,self.y)) # adds trail
             check = G.checkEvent(self)
-            if check == True:
+            if check == True: # if won the game
                 G.showGrid()
                 print("You Won")
                 gameOver = True
                 break
-            elif check == False:
+            elif check == False: # if lost the game
                 G.showGrid()
                 print("You Lose")
                 gameOver = True
@@ -368,19 +411,24 @@ class Player:
             # G.showGrid()
 
     def makeMoveLeft(self, value):
+        """
+        Parameters :
+            value : the amount by which the player had to be moved
+        Moves the player to the left
+        """
         global G,gameOver,visited
         for i in range(value):
             self.x -= 1
-            if self.x < 1:# G.setStart(self.pos)
+            if self.x < 1: # if player on the first columnn then ove player to last column
                 self.x = G.getN()
             visited.append((self.x,self.y))
             check = G.checkEvent(self)
-            if check == True:
+            if check == True: # if player won
                 G.showGrid()
                 print("You Won")
                 gameOver = True
                 break
-            elif check == False:
+            elif check == False: # if player lost
                 G.showGrid()
                 print("You Lose")
                 gameOver = True
@@ -389,19 +437,24 @@ class Player:
                 G.showGrid()
 
     def makeMoveUp(self, value):
+        """
+        Parameters :
+            value : the amount by which the player had to be moved
+        Moves the player above
+        """
         global G,gameOver,visited
         for i in range(value):
             self.y -= 1
-            if self.y < 1:
+            if self.y < 1: # if player on the first row then move player to the last row
                 self.y = G.getN()
             visited.append((self.x,self.y))
             check = G.checkEvent(self)
-            if check == True:
+            if check == True: # if won the game
                 G.showGrid()
                 print("You Won")
                 gameOver = True
                 break
-            elif check == False:
+            elif check == False: # if lost the game
                 G.showGrid()
                 print("You Lose")
                 gameOver = True
@@ -410,19 +463,24 @@ class Player:
                 G.showGrid()
 
     def makeMoveDown(self, value):
+        """
+        Parameters :
+            value : the amount by which the player had to be moved
+        Moves the player downwards
+        """
         global G,gameOver,visited
         for i in range(value):
             self.y += 1
-            if G.getN() < self.y:
+            if G.getN() < self.y: # if player on the last row then move paer to the first row
                 self.y = 1
             visited.append((self.x,self.y))
             check = G.checkEvent(self)
-            if check == True:
+            if check == True: # if player own the game
                 G.showGrid()
                 print("You Won")
                 gameOver = True
                 break
-            elif check == False:
+            elif check == False: # if player lost the game
                 G.showGrid()
                 print("You Lose")
                 gameOver = True
@@ -478,23 +536,24 @@ class Player:
         return (self.x,self.y)
 
 
-visited = []
+#INPUT
+visited = [] # since no point visited
 print("What should be the size of the grid?")
 N = int(input())
 print("Choose difficulty: 'H' for Hard and 'E' for Easy:")
 diff = input()
-
+#INITIALISING THE OBJECTS
 initialEnergy = N
-P = Player(0,0,2 * initialEnergy)
-G = Grid(N,diff)
-gameOver = False
+P = Player(0,0,2 * initialEnergy)  # initialising the player object
+G = Grid(N,diff) # initialising grid
+gameOver = False # gameover boolean
 s=''
-
-while s != 'EXIT' and not(gameOver):
-    visited = []
+#MAIN GAME RUNNER LOOP
+while s != 'EXIT' and not(gameOver): # s!= EXIT condition to forcefully quit the code
+    visited = [] # to remove trail after every move
     clear()
-    print("ENERGY:",P.getEnergy())
+    print("ENERGY:",P.getEnergy()) # display energy and grid after every move
     G.showGrid()
-    s = input()
+    s = input() # taking next move till game not over
     if s != 'EXIT':
         P.makeMove(s)
