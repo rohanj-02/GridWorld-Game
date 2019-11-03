@@ -30,10 +30,17 @@ class Grid:
         """
         #Invariants
         assert type(N) == int, "N should be of type int "
+        assert difficulty in ["H","E"], "Invalid Difficulty"
         global P
         self.N = N
         points = []
-        if difficulty[0] == 'H':
+        if self.N == 2:
+            noOfPoints = 1
+        elif self.N == 3:
+            noOfPoints = self.N
+        elif self.N == 4:
+            noOfPoints = self.N
+        elif difficulty[0] == 'H':
             noOfPoints = 2 * self.N
         elif difficulty[0] == 'E':
             noOfPoints = self.N
@@ -42,6 +49,7 @@ class Grid:
             first = random.sample(range(1, self.N + 1), 1)
             if first in boundaryList:
                 second = random.sample(range(1, self.N + 1), 1)
+                second = second[0]
             else:
                 second = random.sample(range(2), 1)
                 second = boundaryList[second[0]]
@@ -470,29 +478,23 @@ class Player:
         return (self.x,self.y)
 
 
-initialEnergy = 20
 visited = []
 print("What should be the size of the grid?")
 N = int(input())
 print("Choose difficulty: 'H' for Hard and 'E' for Easy:")
 diff = input()
+
+initialEnergy = N
 P = Player(0,0,2 * initialEnergy)
 G = Grid(N,diff)
 gameOver = False
+s=''
 
-def display(G, P):
+while s != 'EXIT' and not(gameOver):
+    visited = []
     clear()
     print("ENERGY:",P.getEnergy())
     G.showGrid()
-
-def runner():
-    s=''
-    condition = False
-    while s != 'EXIT' and not(gameOver):
-        global visited
-        visited = []
-        display(G, P)
-        s = input()
-        if s != 'EXIT':
-            P.makeMove(s)
-runner()
+    s = input()
+    if s != 'EXIT':
+        P.makeMove(s)
