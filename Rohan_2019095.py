@@ -174,9 +174,8 @@ class Grid:
             self.myRewards.remove(rew[1])
         elif ob[0]:
             player.decreaseEnergy(4 * initialEnergy)
-            self.myObstacles.remove(ob[1])
-        else:
-            player.decreaseEnergy(1)
+            # self.myObstacles.remove(ob[1])
+        player.decreaseEnergy(1)
         if player.getEnergy() <= 0:
             gameOver = True
             return False
