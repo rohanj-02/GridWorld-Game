@@ -34,8 +34,9 @@ class Grid:
         """
         #Invariants
         assert type(N) == int, "N should be of type int "
-        assert difficulty in ["H","E"], "Invalid Difficulty"
+        assert difficulty in ["H","E","h","e"], "Invalid Difficulty"
         global P
+        difficulty = difficulty.upper()
         self.N = N
         points = []
         if self.N == 2: #difficulty doesn't matter when N < 5 because it isn't possible to have 4*n + 2 points in grid size < 5
@@ -91,7 +92,7 @@ class Grid:
             n: The number of times the grid has to be rotated
         """
         global P, visited
-        for k in range(n % 4): # since after 4 rotation, grid back to original position
+        for k in range(n): # since after 4 rotation, grid back to original position
             newobstacle = []
             newreward = []
             for i in self.myObstacles:
@@ -106,13 +107,13 @@ class Grid:
         if check[0]:
             print("Grid can't be rotated. Player clashing with obstacle.") # if clashing with obstacle
             time.sleep(2)
-            self.rotateClockwise((n % 4)) # undo rotate antiCLockwise by rotating clockWise same number of times
+            self.rotateClockwise(n) # undo rotate antiCLockwise by rotating clockWise same number of times
             # P.increaseEnergy(1)
         else:
-            self.checkEvent(P)
             visited = []
             for i in range(n): #decreaseEnergy for each n
                 P.decreaseEnergy(self.N//3)
+            # self.checkEvent(P)
         pass
 
     def rotateClockwise(self, n):
@@ -122,9 +123,11 @@ class Grid:
         Parameters:
             n: The number of times the grid has to be rotated
         """
+        global P
         self.rotateAnticlockwise(n * 3) # rotating n clockwise is same as rotating 3*n anti clockwise
         for i in range(2 * n):
             P.increaseEnergy(self.N//3)
+        # self.checkEvent(P)
         pass
 
     def showGrid(self):
@@ -137,7 +140,11 @@ class Grid:
         """
         global P, visited
         clear()
-        print("ENERGY:", P.getEnergy())
+        if P.getEnergy() > 0:
+            e = P.getEnergy()
+        else:
+            e = 0
+        print("ENERGY:", e)
         for i in range(1, self.N+1):
             for j in range(1, self.N+1): # iterating through every point, if point is reward then print corresponding value if obstacle then # if goal then G if player then O else .
                 temp = (j,i)
@@ -355,7 +362,7 @@ class Player:
             eg. s = "R4D3L2U1" means move 4 units to the right, then 3 units down,
             then 2 units to the left and finally 1 unit upwards.
         """
-        global visited
+        global visited, gameOver
         s = s.upper()
         visited.append((self.x,self.y)) # to display 'x' as trail
         for i in range(len(s)):
@@ -376,9 +383,29 @@ class Player:
                 elif s[i] == 'C':
                     G.rotateClockwise(val)
                     self.energy += 1 # because energy to be decreased is ony n//3 and checkEvent decreases 1 for every move
+                    check = G.checkEvent(self)
+                    if check == True: # if won the game
+                        G.showGrid()
+                        print("You Won")
+                        gameOver = True
+                        break
+                    elif check == False: # if lost the game
+                        G.showGrid()
+                        print("You Lose")
+                        gameOver = True
                 elif s[i] == 'A':
                     G.rotateAnticlockwise(val)
                     self.energy += 1 # because energy to be decreased is ony n//3 and checkEvent decreases 1 for every move
+                    check = G.checkEvent(self)
+                    if check == True: # if won the game
+                        G.showGrid()
+                        print("You Won")
+                        gameOver = True
+                        break
+                    elif check == False: # if lost the game
+                        G.showGrid()
+                        print("You Lose")
+                        gameOver = True
                 i = i + j - 1 # goes directly to the new alphabet
         pass
 
