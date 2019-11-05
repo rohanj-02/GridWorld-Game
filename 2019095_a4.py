@@ -46,9 +46,9 @@ class Grid:
         elif self.N == 4:
             noOfPoints = self.N
         elif difficulty[0] == 'H':
-            noOfPoints = 2 * self.N
+            noOfPoints = (self.N//2) ** 2
         elif difficulty[0] == 'E':
-            noOfPoints = self.N
+            noOfPoints = (self.N//3) ** 2
         boundaryList = [1,self.N]
         while len(points) != 2: # to make sure start and goal are points at the boundary
             first = random.sample(range(1, self.N + 1), 1)
@@ -163,7 +163,7 @@ class Grid:
                 else:
                     print(".", end = " ")
             print()
-        time.sleep(1) # delay to show each step
+        time.sleep(0.7) # delay to show each step
 
     def isReward(self, pt):
         """
